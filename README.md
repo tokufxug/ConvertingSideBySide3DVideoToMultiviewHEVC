@@ -10,6 +10,8 @@ To convert side-by-side video to MV-HEVC, you load the source video, extract eac
 
 This sample app demonstrates the process for converting side-by-side video files to MV-HEVC, encoding the output as a QuickTime file. The output is placed in the same directory as the input file, with `_MVHEVC` appended to the original filename.
 
+You can verify this sample's MV-HEVC output by opening it with the sample project from [Reading multiview 3D video files][1].
+
 For the full details of the MV-HEVC format, see [Apple HEVC Stereo Video - Interoperability Profile (PDF)](https://developer.apple.com/av-foundation/HEVC-Stereo-Video-Profile.pdf) and [ISO Base Media File Format and Apple HEVC Stereo Video (PDF)](https://developer.apple.com/av-foundation/Stereo-Video-ISOBMFF-Extensions.pdf).
 
 ## Configure the sample code project
@@ -240,6 +242,7 @@ default:
 ```
 [View in Source][ConvertFrame]
 
+[1]: https://developer.apple.com/documentation/avfoundation/media_reading_and_writing/reading_multiview_3d_video_files
 [2]: https://developer.apple.com/documentation/avfoundation/avassetreader
 [3]: https://developer.apple.com/documentation/avfoundation/avasset/3746530-loadtracks
 [4]: https://developer.apple.com/documentation/avfoundation/avassetreadertrackoutput
