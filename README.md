@@ -59,11 +59,11 @@ if reader.canAdd(sideBySideTrack) {
 ```
 [View in Source][ReadInputVideo]
 
-When creating the reader track output, the app specifies the file's pixel format and [`IOSurface`][5] settings in the `readerSettings` dictionary. The app indicates that output goes to a 32-bit ARGB pixel buffer, using [`kCVPixelBufferPixelFormatTypeKey`][a] with a value of [`kCVPixelFormatType_32ARGB`][b]. The sample app also manages its own pixel buffer allocations, passing an empty array as the value for [`kCVPixelBufferIOSurfacePropertiesKey`][6].
+When creating the reader track output, the app specifies the file's pixel format and [`IOSurface`][5] settings in the `readerSettings` dictionary. The app indicates that output goes to a 32-bit ARGB pixel buffer, using [`kCVPixelBufferPixelFormatTypeKey`][6] with a value of [`kCVPixelFormatType_32ARGB`][7]. The sample app also manages its own pixel buffer allocations, passing an empty array as the value for [`kCVPixelBufferIOSurfacePropertiesKey`][8].
 
 ## Configure the output MV-HEVC file
 
-With the reader initialized, the app calls the `async` method [`convertFrame(fromSideBySide:with:in:)`][TranscodeVideo] to generate the output file. First, the app creates a new [`AVAssetWriter`][7] pointing to the video output location, and then configures the necessary information on the output to indicate that the file contains MV-HEVC video.
+With the reader initialized, the app calls the `async` method [`convertFrame(fromSideBySide:with:in:)`][TranscodeVideo] to generate the output file. First, the app creates a new [`AVAssetWriter`][9] pointing to the video output location, and then configures the necessary information on the output to indicate that the file contains MV-HEVC video.
 
 ``` swift
             let multiviewCompressionProperties: [String: Any] = [kVTCompressionPropertyKey_MVHEVCVideoLayerIDs as String: MVHEVCVideoLayerIDs,
@@ -84,7 +84,7 @@ guard multiviewWriter.canApply(outputSettings: multiviewSettings, forMediaType: 
 ```
 [View in Source][TranscodeVideo]
 
-[`kVTCompressionPropertyKey_HasLeftStereoEyeView`][8] and [`kVTCompressionPropertyKey_HasRightStereoEyeView`][9] are `true`, because the output contains a layer for each eye. These video track IDs are in the output metadata through the [`kVTCompressionPropertyKey_MVHEVCVideoLayerIDs`][10], [`kVTCompressionPropertyKey_MVHEVCViewIDs`][11], and [`kVTCompressionPropertyKey_MVHEVCLeftAndRightViewIDs`][12] settings keys. In the sample app, these are all the same, for consistency.
+[`kVTCompressionPropertyKey_HasLeftStereoEyeView`][10] and [`kVTCompressionPropertyKey_HasRightStereoEyeView`][11] are `true`, because the output contains a layer for each eye. These video track IDs are in the output metadata through the [`kVTCompressionPropertyKey_MVHEVCVideoLayerIDs`][12], [`kVTCompressionPropertyKey_MVHEVCViewIDs`][13], and [`kVTCompressionPropertyKey_MVHEVCLeftAndRightViewIDs`][14] settings keys. In the sample app, these are all the same, for consistency.
 
 The sample app uses `0` for the left eye layer and `1` for the right eye layer.
 
@@ -93,11 +93,9 @@ let MVHEVCVideoLayerIDs = [0, 1]
 ```
 [View in Source][VideoLayers]
 
-- Note: Playing back MV-HEVC content in environments without an HEVC decoder, such as the visionOS simulator, uses video layer `0` for all content.
-
 ## Configure the MV-HEVC input source
 
-The app transcodes video by directly copying pixels from the source frame. Writing track data to a video file requires an [`AVAssetWriterInput`][13]. The sample app uses an [`AVAssetWriterInputTaggedPixelBufferGroupAdaptor`][14] to provide pixel data from the source, writing to the output.
+The app transcodes video by directly copying pixels from the source frame. Writing track data to a video file requires an [`AVAssetWriterInput`][15]. The sample app uses an [`AVAssetWriterInputTaggedPixelBufferGroupAdaptor`][16] to provide pixel data from the source, writing to the output.
 
 ``` swift
 let frameInput = AVAssetWriterInput(mediaType: .video, outputSettings: multiviewSettings)
@@ -111,7 +109,7 @@ let bufferInputAdapter = AVAssetWriterInputTaggedPixelBufferGroupAdaptor(assetWr
 ```
 [View in Source][TranscodeVideo]
 
-The `AVAssetWriterInput` source uses the same `outputSettings` as `videoWriter`, and the created pixel buffer adapter has the same frame size as the source. The app follows the best practice of calling [`canAdd(_:)`][c] to check the input adapter compatibility before calling [`add(_:)`][16] to use it as a source.
+The `AVAssetWriterInput` source uses the same `outputSettings` as `videoWriter`, and the created pixel buffer adapter has the same frame size as the source. The app follows the best practice of calling [`canAdd(_:)`][17] to check the input adapter compatibility before calling [`add(_:)`][18] to use it as a source.
 
 ``` swift
 guard multiviewWriter.canAdd(frameInput) else {
@@ -123,7 +121,7 @@ multiviewWriter.add(frameInput)
 
 ## Process input as it becomes available
 
-The app calls [`startWriting()`][17a] and [`startSession(atSourceTime:)`][17b] in sequence to start the video writing process, and then iterates over available frame inputs with [`requestMediaDataWhenReady(on:using:)`][18].
+The app calls [`startWriting()`][19] and [`startSession(atSourceTime:)`][20] in sequence to start the video writing process, and then iterates over available frame inputs with [`requestMediaDataWhenReady(on:using:)`][21].
 
 ``` swift
 guard multiviewWriter.startWriting() else {
@@ -136,11 +134,11 @@ frameInput.requestMediaDataWhenReady(on: DispatchQueue(label: "Multiview HEVC Wr
 ```
 [View in Source][TranscodeVideo]
 
-The closure argument of `requestMediaDataWhenReady(on:using:)` runs on the provided [`DispatchQueue`][d] when the first data read is available. The closure itself is responsible for managing resources that process the media data, and running a loop to process data efficiently.
+The closure argument of `requestMediaDataWhenReady(on:using:)` runs on the provided [`DispatchQueue`][22] when the first data read is available. The closure itself is responsible for managing resources that process the media data, and running a loop to process data efficiently.
 
 ## Create the video frame transfer session and output pixel buffer pool
 
-To perform the data transfer from the source track, the pixel input adapter requires a pixel buffer as a source. The app creates a [`VTPixelTransferSession`][24] to allow for reading data from the video source, and then creates a [`CVPixelBufferPool`][25] to allocate pixel buffers for the new multiview eye layers.
+To perform the data transfer from the source track, the pixel input adapter requires a pixel buffer as a source. The app creates a [`VTPixelTransferSession`][23] to allow for reading data from the video source, and then creates a [`CVPixelBufferPool`][24] to allocate pixel buffers for the new multiview eye layers.
 
 ``` swift
 var session: VTPixelTransferSession? = nil
@@ -155,7 +153,9 @@ The app copies frames with temporary buffers allocated from the buffer pool that
 
 ## Copy frame images from input to output
 
-After preparing resources, the app then begins a loop to process frames until there's no more data, or the input read has stopped to buffer data. The [`isReadyForMoreMediaData`][e] property of an input source is `true` if another frame is immediately available to process. When a frame is ready, a [`CVImageBuffer`][23] instance is created from it.
+After preparing resources, the app then begins a loop to process frames until there's no more data, or the input read has stopped to buffer data. The [`isReadyForMoreMediaData`][26] property of an input source is `true` if another frame is immediately available to process. When a frame is ready, a [`CVImageBuffer`][27] instance is created from it.
+
+The app is now ready to handle sampling. If there's an available sample, the app processes it in the [`convertFrame`][ConvertFrame] method, then calls [`appendTaggedBuffers(_:withPresentationTime:)`][28], copying the side-by-side sample buffer's [`outputPresentationTimestamp`][29] timestamp to the new multiview timestamp.
 
 ``` swift
 while frameInput.isReadyForMoreMediaData && bufferInputAdapter.assetWriterInput.isReadyForMoreMediaData {
@@ -163,33 +163,29 @@ while frameInput.isReadyForMoreMediaData && bufferInputAdapter.assetWriterInput.
                        guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
                            fatalError("Failed to load source samples as an image buffer")
                        }
+                       let taggedBuffers = self.convertFrame(fromSideBySide: imageBuffer, with: pixelBufferPool, in: session)
+                       let newPTS = sampleBuffer.outputPresentationTimeStamp
+                       if !bufferInputAdapter.appendTaggedBuffers(taggedBuffers, withPresentationTime: newPTS) {
+                           fatalError("Failed to append tagged buffers to multiview output")
+                       }
 ```
 [View in Source][TranscodeVideo]
 
-The app is now ready to handle sampling. If there's an available sample, the app processes it in the [`bufferGroup`][ConvertFrame] method, then calls [`appendTaggedBuffers(_:withPresentationTime:)`][g], copying the side-by-side sample buffer's [`outputPresentationTimestamp`][f] timestamp to the new multiview timestamp.
-
-Input reading finishes when there are no more samples to process from the input stream. The app calls [`markAsFinished()`][20] to close the stream, and [`finishWriting(completionHandler:)`][21] to complete the multiview video write. The app also calls [`resume()`][22] on its associated [`CheckedContinuation`][h], to return to the `await`ed call.
+Input reading finishes when there are no more sample buffers to process from the input stream. The app calls [`markAsFinished()`][30] to close the stream, and [`finishWriting(completionHandler:)`][31] to complete the multiview video write. The app also calls [`resume()`][32] on its associated [`CheckedContinuation`][33], to return to the `await`ed call, then breaks from the processing loop.
 
 ``` swift
-if let taggedBuffers = self.convertFrame(fromSideBySide: imageBuffer, with: pixelBufferPool, in: session) {
-    let newPTS = sampleBuffer.outputPresentationTimeStamp
-    if !bufferInputAdapter.appendTaggedBuffers(taggedBuffers, withPresentationTime: newPTS) {
-        fatalError("Failed to append tagged buffers to multiview output")
-    }
-} else {
-    frameInput.markAsFinished()
-    multiviewWriter.finishWriting {
-        continuation.resume()
-    }
-    
-    break
+frameInput.markAsFinished()
+multiviewWriter.finishWriting {
+    continuation.resume()
 }
+
+break
 ```
 [View in Source][TranscodeVideo]
 
 ## Convert side-by-side inputs into video layer outputs
 
-In the `bufferGroup` method, the app processes the left and right eye images for the frame by `layerID`, using `0` for the left eye and `1` for the right. First, the app creates a pixel buffer from the pool.
+In the `convertFrame` method, the app processes the left and right eye images for the frame by `layerID`, using `0` for the left eye and `1` for the right. First, the app creates a pixel buffer from the pool.
 
 ``` swift
 var pixelBuffer: CVPixelBuffer?
@@ -220,11 +216,11 @@ guard VTPixelTransferSessionTransferImage(session, from: imageBuffer, to: pixelB
 ```
 [View in Source][ConvertFrame]
 
-Setting aperture view properties on [`CVBufferSetAttachment()`][26] defines how to capture and crop input images. The aperture here is the size of an eye image, and the center of the capture frame offset with [`kCVImageBufferCleanApertureHorizontalOffsetKey`][27] by `-0.5 * width` for the left eye and `+0.5 * width` for the right eye, to capture the correct half of the side-by-side frame.
+Setting aperture view properties on [`CVBufferSetAttachment()`][34] defines how to capture and crop input images. The aperture here is the size of an eye image, and the center of the capture frame offset with [`kCVImageBufferCleanApertureHorizontalOffsetKey`][35] by `-0.5 * width` for the left eye and `+0.5 * width` for the right eye, to capture the correct half of the side-by-side frame.
 
-The app then calls [`VTSessionSetProperty`][28] to crop the image to the aperture frame with [`kVTScalingMode_CropSourceToCleanAperture`][29]. Next, the app calls [`VTPixelTransferSessionTransferImage`][30] to copy source pixels to the destination buffer.
+The app then calls [`VTSessionSetProperty`][36] to crop the image to the aperture frame with [`kVTScalingMode_CropSourceToCleanAperture`][37]. Next, the app calls [`VTPixelTransferSessionTransferImage`][38] to copy source pixels to the destination buffer.
 
-The final step is to create a [`CMTaggedBuffer`][i] for the eye image to return to the calling output writer.
+The final step is to create a [`CMTaggedBuffer`][39] for the eye image to return to the calling output writer.
 
 ``` swift
 switch layerID {
@@ -247,41 +243,39 @@ default:
 [3]: https://developer.apple.com/documentation/avfoundation/avasset/3746530-loadtracks
 [4]: https://developer.apple.com/documentation/avfoundation/avassetreadertrackoutput
 [5]: https://developer.apple.com/documentation/iosurface
-[6]: https://developer.apple.com/documentation/corevideo/kcvpixelbufferiosurfacepropertieskey
-[7]: https://developer.apple.com/documentation/avfoundation/avassetwriter
-[8]: https://developer.apple.com/documentation/videotoolbox/kvtcompressionpropertykey_hasleftstereoeyeview
-[9]: https://developer.apple.com/documentation/videotoolbox/kvtcompressionpropertykey_hasrightstereoeyeview
-[10]: https://developer.apple.com/documentation/videotoolbox/kvtcompressionpropertykey_mvhevcvideolayerids
-[11]: https://developer.apple.com/documentation/videotoolbox/kvtcompressionpropertykey_mvhevcviewids
-[12]: https://developer.apple.com/documentation/videotoolbox/kvtcompressionpropertykey_mvhevcleftandrightviewids
-[13]: https://developer.apple.com/documentation/avfoundation/avassetwriterinput
-[14]: https://developer.apple.com/documentation/avfoundation/avassetwriterinputpixelbufferadaptor
-[16]: https://developer.apple.com/documentation/avfoundation/avassetwriter/1390389-add
-[17a]: https://developer.apple.com/documentation/avfoundation/avassetwriter/1386724-startwriting
-[17b]: https://developer.apple.com/documentation/avfoundation/avassetwriter/1389908-startsession
-[18]: https://developer.apple.com/documentation/avfoundation/avassetwriterinput/1387508-requestmediadatawhenready
-[19]: https://developer.apple.com/documentation/coremedia/cmtaggedbuffer
-[20]: https://developer.apple.com/documentation/avfoundation/avassetwriterinput/1390122-markasfinished
-[21]: https://developer.apple.com/documentation/avfoundation/avassetwriter/1390432-finishwriting
-[22]: https://developer.apple.com/documentation/swift/checkedcontinuation/resume()
-[23]: https://developer.apple.com/documentation/corevideo/cvimagebuffer
-[24]: https://developer.apple.com/documentation/videotoolbox/vtpixeltransfersession
-[25]: https://developer.apple.com/documentation/corevideo/cvpixelbufferpool
-[26]: https://developer.apple.com/documentation/corevideo/1456974-cvbuffersetattachment
-[27]: https://developer.apple.com/documentation/corevideo/kcvimagebuffercleanaperturehorizontaloffsetkey
-[28]: https://developer.apple.com/documentation/videotoolbox/1536144-vtsessionsetproperty
-[29]: https://developer.apple.com/documentation/videotoolbox/kvtscalingmode_cropsourcetocleanaperture
-[30]: https://developer.apple.com/documentation/videotoolbox/1503548-vtpixeltransfersessiontransferim
-
-[a]: https://developer.apple.com/documentation/corevideo/kcvpixelbufferpixelformattypekey
-[b]: https://developer.apple.com/documentation/corevideo/kcvpixelformattype_32argb
-[c]: https://developer.apple.com/documentation/avfoundation/avassetwriter/1387863-canadd
-[d]: https://developer.apple.com/documentation/dispatch/dispatchqueue
-[e]: https://developer.apple.com/documentation/avfoundation/avassetwriterinput/1389084-isreadyformoremediadata
-[f]: https://developer.apple.com/documentation/coremedia/cmsamplebuffer/3242557-outputpresentationtimestamp
-[g]: https://developer.apple.com/documentation/avfoundation/avassetwriterinputpixelbufferadaptor/1388102-append
-[h]: https://developer.apple.com/documentation/swift/checkedcontinuation
-[i]: https://developer.apple.com/documentation/coremedia/cmtaggedbuffer
+[6]: https://developer.apple.com/documentation/corevideo/kcvpixelbufferpixelformattypekey
+[7]: https://developer.apple.com/documentation/corevideo/kcvpixelformattype_32argb
+[8]: https://developer.apple.com/documentation/corevideo/kcvpixelbufferiosurfacepropertieskey
+[9]: https://developer.apple.com/documentation/avfoundation/avassetwriter
+[10]: https://developer.apple.com/documentation/videotoolbox/kvtcompressionpropertykey_hasleftstereoeyeview
+[11]: https://developer.apple.com/documentation/videotoolbox/kvtcompressionpropertykey_hasrightstereoeyeview
+[12]: https://developer.apple.com/documentation/videotoolbox/kvtcompressionpropertykey_mvhevcvideolayerids
+[13]: https://developer.apple.com/documentation/videotoolbox/kvtcompressionpropertykey_mvhevcviewids
+[14]: https://developer.apple.com/documentation/videotoolbox/kvtcompressionpropertykey_mvhevcleftandrightviewids
+[15]: https://developer.apple.com/documentation/avfoundation/avassetwriterinput
+[16]: https://developer.apple.com/documentation/avfoundation/avassetwriterinputpixelbufferadaptor
+[17]: https://developer.apple.com/documentation/avfoundation/avassetwriter/1387863-canadd
+[18]: https://developer.apple.com/documentation/avfoundation/avassetwriter/1390389-add
+[19]: https://developer.apple.com/documentation/avfoundation/avassetwriter/1386724-startwriting
+[20]: https://developer.apple.com/documentation/avfoundation/avassetwriter/1389908-startsession
+[21]: https://developer.apple.com/documentation/avfoundation/avassetwriterinput/1387508-requestmediadatawhenready
+[22]: https://developer.apple.com/documentation/dispatch/dispatchqueue
+[23]: https://developer.apple.com/documentation/videotoolbox/vtpixeltransfersession
+[24]: https://developer.apple.com/documentation/corevideo/cvpixelbufferpool
+[26]: https://developer.apple.com/documentation/avfoundation/avassetwriterinput/1389084-isreadyformoremediadata
+[27]: https://developer.apple.com/documentation/corevideo/cvimagebuffer
+[28]: https://developer.apple.com/documentation/avfoundation/avassetwriterinputpixelbufferadaptor/1388102-append
+[29]: https://developer.apple.com/documentation/coremedia/cmsamplebuffer/3242557-outputpresentationtimestamp
+[30]: https://developer.apple.com/documentation/avfoundation/avassetwriterinput/1390122-markasfinished
+[31]: https://developer.apple.com/documentation/avfoundation/avassetwriter/1390432-finishwriting
+[32]: https://developer.apple.com/documentation/swift/checkedcontinuation/resume()
+[33]: https://developer.apple.com/documentation/swift/checkedcontinuation
+[34]: https://developer.apple.com/documentation/corevideo/1456974-cvbuffersetattachment
+[35]: https://developer.apple.com/documentation/corevideo/kcvimagebuffercleanaperturehorizontaloffsetkey
+[36]: https://developer.apple.com/documentation/videotoolbox/1536144-vtsessionsetproperty
+[37]: https://developer.apple.com/documentation/videotoolbox/kvtscalingmode_cropsourcetocleanaperture
+[38]: https://developer.apple.com/documentation/videotoolbox/1503548-vtpixeltransfersessiontransferim
+[39]: https://developer.apple.com/documentation/coremedia/cmtaggedbuffer
 
 [VideoLayers]:				x-source-tag://VideoLayers
 [ReadInputVideo]: 			x-source-tag://ReadInputVideo

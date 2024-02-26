@@ -121,20 +121,18 @@ final class SideBySideConverter: Sendable {
                             guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
                                 fatalError("Failed to load source samples as an image buffer")
                             }
-                            
-                            if let taggedBuffers = self.convertFrame(fromSideBySide: imageBuffer, with: pixelBufferPool, in: session) {
-                                let newPTS = sampleBuffer.outputPresentationTimeStamp
-                                if !bufferInputAdapter.appendTaggedBuffers(taggedBuffers, withPresentationTime: newPTS) {
-                                    fatalError("Failed to append tagged buffers to multiview output")
-                                }
-                            } else {
-                                frameInput.markAsFinished()
-                                multiviewWriter.finishWriting {
-                                    continuation.resume()
-                                }
-                                
-                                break
+                            let taggedBuffers = self.convertFrame(fromSideBySide: imageBuffer, with: pixelBufferPool, in: session)
+                            let newPTS = sampleBuffer.outputPresentationTimeStamp
+                            if !bufferInputAdapter.appendTaggedBuffers(taggedBuffers, withPresentationTime: newPTS) {
+                                fatalError("Failed to append tagged buffers to multiview output")
                             }
+                        } else {
+                            frameInput.markAsFinished()
+                            multiviewWriter.finishWriting {
+                                continuation.resume()
+                            }
+
+                            break
                         }
                     }
 				}
@@ -149,7 +147,7 @@ final class SideBySideConverter: Sendable {
     ///   - in: The transfer session to perform the pixel transfer.
 	/// - Returns: Group of tagged buffers for the left and right eyes.
     /// - Tag: ConvertFrame
-    func convertFrame(fromSideBySide imageBuffer: CVImageBuffer, with pixelBufferPool: CVPixelBufferPool, in session: VTPixelTransferSession) -> [CMTaggedBuffer]? {
+    func convertFrame(fromSideBySide imageBuffer: CVImageBuffer, with pixelBufferPool: CVPixelBufferPool, in session: VTPixelTransferSession) -> [CMTaggedBuffer] {
         // Output contains two tagged buffers, left eye frame first.
 		var taggedBuffers: [CMTaggedBuffer] = []
 
