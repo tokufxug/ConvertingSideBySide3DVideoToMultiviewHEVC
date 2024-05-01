@@ -59,12 +59,16 @@ final class SideBySideConverter: Sendable {
 			Task {
 				let multiviewWriter = try AVAssetWriter(outputURL: videoOutputURL, fileType: AVFileType.mov)
 
-                let multiviewCompressionProperties: [String: Any] = [kVTCompressionPropertyKey_MVHEVCVideoLayerIDs as String: MVHEVCVideoLayerIDs,
-																		  kVTCompressionPropertyKey_MVHEVCViewIDs as String: MVHEVCVideoLayerIDs,
-															  kVTCompressionPropertyKey_MVHEVCLeftAndRightViewIDs as String: MVHEVCVideoLayerIDs,
-																   kVTCompressionPropertyKey_HasLeftStereoEyeView as String: true,
-																  kVTCompressionPropertyKey_HasRightStereoEyeView as String: true
-				]
+                let multiviewCompressionProperties: [String: Any] = [
+                    kVTCompressionPropertyKey_MVHEVCVideoLayerIDs as String: MVHEVCVideoLayerIDs,
+					kVTCompressionPropertyKey_MVHEVCViewIDs as String: MVHEVCVideoLayerIDs,
+					kVTCompressionPropertyKey_MVHEVCLeftAndRightViewIDs as String: MVHEVCVideoLayerIDs,
+					kVTCompressionPropertyKey_HasLeftStereoEyeView as String: true,
+					kVTCompressionPropertyKey_HasRightStereoEyeView as String: true,
+                    kCMFormatDescriptionExtension_HorizontalFieldOfView as String: 90_000,
+                    kVTCompressionPropertyKey_HorizontalDisparityAdjustment as String: 200,
+                
+                ]
 				let multiviewSettings: [String: Any] = [AVVideoCodecKey: AVVideoCodecType.hevc,
                                                      AVVideoWidthKey: self.eyeFrameSize.width,
                                                     AVVideoHeightKey: self.eyeFrameSize.height,
